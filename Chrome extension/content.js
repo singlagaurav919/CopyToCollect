@@ -1,17 +1,14 @@
-chrome.storage.local.get(['isEnabledKey'],function(result) {
-    if(result.isEnabledKey)
-    {
-        //sideBarDiv.style.display='block';
-    }
-});
-
 var sideBarDiv  = document.createElement("button");
 sideBarDiv.innerHTML = "Show Copied Content";
 sideBarDiv.className = "sideBarDiv";
+sideBarDiv.id = "sideBarId";
 sideBarDiv.onclick = function(){
-    var existingDiv = document.getElementById("copiedContentDiv");
-    var div = existingDiv ? existingDiv : document.createElement("div");
-
+    
+    var existingDiv = document.getElementById("mainMegaDiv");
+    var mainMega = existingDiv ? existingDiv : document.createElement('div');
+    var div = document.createElement("div");
+    var overlayDiv = document.createElement('div');
+    overlayDiv.className = 'overlayDiv';
     var btn = document.createElement( 'button' );
     var textDiv = document.createElement('div');
     textDiv.className = "textAreaDiv";
@@ -20,9 +17,18 @@ sideBarDiv.onclick = function(){
     text.className = "textArea";
     text.cols = "80";
     text.rows = "40";
-    document.body.appendChild( div );
-    div.innerHTML = "";
-    div.style.display = 'block';
+    
+    mainMega.innerHTML = "";
+    mainMega.id = "mainMegaDiv";
+    mainMega.className = 'mainMegaDiv';
+    mainMega.style.display = 'block';
+    mainMega.appendChild(overlayDiv);
+    mainMega.appendChild(div);
+    document.body.appendChild( mainMega );
+    //document.body.appendChild( div );
+    //div.innerHTML = "";
+    //div.style.display = 'block';
+    //overlayDiv.style.display = 'block';
     div.appendChild( btn );
     div.appendChild(textDiv);
     div.id = 'copiedContentDiv';
@@ -33,7 +39,10 @@ sideBarDiv.onclick = function(){
 
     btn.innerHTML = 'Close';
     btn.className = "btnClass";
-    btn.onclick = function(){ div.style.display = 'none';};
+    btn.onclick = function(){ 
+        mainMega.style.display = 'none';
+        //overlayDiv.style.display = 'none';
+    };
 };
 document.body.appendChild(sideBarDiv);
 
@@ -62,4 +71,9 @@ document.addEventListener("copy", () =>
                 console.error('Error occured while processing copied content ', err);
             })
 )
+
+chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+      document.getElementById("sideBarId").style.display = request.enabledValue ? "block" : "none";
+  });
 

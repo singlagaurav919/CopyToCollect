@@ -8,14 +8,19 @@ $(document).ready(function(){
 
     $('#enableButton').on('click', function() {
     chrome.storage.local.get(['isEnabledKey'],function(result) {
-        var isEnabled = result.isEnabledKey;
-        chrome.storage.local.set({isEnabledKey:  !isEnabled},function(result) {});
-        InitializeEnableButton(!isEnabled, $('#enableButton'));
+            var isEnabled = result.isEnabledKey;
+            chrome.storage.local.set({isEnabledKey:  !isEnabled},function(result) {});
+            InitializeEnableButton(!isEnabled, $('#enableButton'));
+            chrome.tabs.query({}, function(tabs) {
+                for (var i=0; i<tabs.length; ++i) {
+                    chrome.tabs.sendMessage(tabs[i].id, {enabledValue : !isEnabled});
+                }
+            });
         });
     });
     $('#clearButton').on('click', function() {
         chrome.storage.local.remove('allContent',function() {
-            alert("Data cleared");
+            //alert("Data cleared");
         });
     });
 });
