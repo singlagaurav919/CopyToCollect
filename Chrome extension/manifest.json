@@ -1,22 +1,20 @@
 {
     "manifest_version": 2,
-  
+
     "name": "Copy to File",
     "description": "This extension will add copied text into a file",
     "version": "1.0",
-  
+
     "browser_action": {
-     "default_icon": "icon.png",
-     "default_popup": "popup.html"
+        "default_icon": "icon.png",
+        "default_popup": "popup.html"
     },
     "permissions": [
-     "tabs","<all_urls>","storage"
-     ],
-     "content_scripts": [
-        {
-          "matches": ["<all_urls>"],
-          "js": ["jquery.min.js", "content.js"],
-          "css": ["content.css"]
-        }
-      ]
-  }
+        "tabs", "<all_urls>", "storage"
+    ],
+    "content_scripts": [{
+        "matches": ["<all_urls>"],
+        "js": ["jquery.min.js", "content.js"],
+        "css": ["content.css"]
+    }]
+}

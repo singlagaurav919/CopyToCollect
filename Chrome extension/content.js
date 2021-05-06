@@ -1,79 +1,112 @@
-var sideBarDiv  = document.createElement("button");
-sideBarDiv.innerHTML = "Show Copied Content";
-sideBarDiv.className = "sideBarDiv";
-sideBarDiv.id = "sideBarId";
-sideBarDiv.onclick = function(){
-    
-    var existingDiv = document.getElementById("mainMegaDiv");
-    var mainMega = existingDiv ? existingDiv : document.createElement('div');
-    var div = document.createElement("div");
+var showCopiedBtn = document.createElement("button");
+showCopiedBtn.innerHTML = "Show Copied Content";
+showCopiedBtn.className = "showCopiedBtn";
+showCopiedBtn.id = "showCopiedBtnId";
+showCopiedBtn.onclick = function() {
+
+    var existingParentContainer = document.getElementById("parentContainerDiv");
+    var parentContainer = existingParentContainer ? existingParentContainer : document.createElement('div');
+
+
+    //overlayDiv to hide background content
     var overlayDiv = document.createElement('div');
     overlayDiv.className = 'overlayDiv';
-    var btn = document.createElement( 'button' );
-    var textDiv = document.createElement('div');
-    textDiv.className = "textAreaDiv";
-    var text = document.createElement('textarea');
-    textDiv.appendChild(text);
-    text.className = "textArea";
-    text.cols = "80";
-    text.rows = "40";
-    
-    mainMega.innerHTML = "";
-    mainMega.id = "mainMegaDiv";
-    mainMega.className = 'mainMegaDiv';
-    mainMega.style.display = 'block';
-    mainMega.appendChild(overlayDiv);
-    mainMega.appendChild(div);
-    document.body.appendChild( mainMega );
-    //document.body.appendChild( div );
-    //div.innerHTML = "";
-    //div.style.display = 'block';
-    //overlayDiv.style.display = 'block';
-    div.appendChild( btn );
-    div.appendChild(textDiv);
-    div.id = 'copiedContentDiv';
-    div.className = "mainDiv";
-    chrome.storage.local.get(['allContent'],function(result) {
-        text.value = result.allContent ? result.allContent : "";
+
+    //close button
+    var closeBtn = document.createElement('button');
+    closeBtn.innerHTML = 'Close';
+    closeBtn.className = "closeBtnClass";
+    closeBtn.onclick = function() {
+        parentContainer.style.display = 'none';
+    };
+
+    //Save button
+    var saveBtn = document.createElement('button');
+    saveBtn.innerHTML = 'Save';
+    saveBtn.className = "saveBtnClass";
+    saveBtn.onclick = function() {
+        chrome.storage.local.set({ allContent: document.getElementById("copiedTextAreaId").value }, function() {
+            alert("Updated Successfully");
+        });
+    };
+
+    //header container
+    var headerDiv = document.createElement('div');
+    headerDiv.className = 'headerDiv';
+    headerDiv.appendChild(closeBtn);
+    headerDiv.appendChild(saveBtn);
+
+    //copied text area
+    var copiedtextArea = document.createElement('textarea');
+    copiedtextArea.className = "textArea";
+    copiedtextArea.id = "copiedTextAreaId";
+    chrome.storage.local.get(['allContent'], function(result) {
+        copiedtextArea.value = result.allContent ? result.allContent : "";
     });
 
-    btn.innerHTML = 'Close';
-    btn.className = "btnClass";
-    btn.onclick = function(){ 
-        mainMega.style.display = 'none';
-        //overlayDiv.style.display = 'none';
-    };
-};
-document.body.appendChild(sideBarDiv);
+    //copied text container
+    var copiedTextContainerDiv = document.createElement('div');
+    copiedTextContainerDiv.className = "textAreaDiv";
+    copiedTextContainerDiv.appendChild(copiedtextArea);
 
-chrome.storage.local.get(['isEnabledKey'],function(result) {
-    if(result.isEnabledKey)
-    {
-        sideBarDiv.style.display='block';
-    }
-    else{
-        sideBarDiv.style.display='none';
+    //content container
+    var contentContainer = document.createElement("div");
+    contentContainer.appendChild(headerDiv);
+    contentContainer.appendChild(copiedTextContainerDiv);
+    contentContainer.id = 'copiedContentDiv';
+    contentContainer.className = "contentContainerDiv";
+
+    //parent container
+    parentContainer.innerHTML = "";
+    parentContainer.id = "parentContainerDiv";
+    parentContainer.className = 'parentContainerDiv';
+    parentContainer.style.display = 'block';
+    parentContainer.appendChild(overlayDiv);
+    parentContainer.appendChild(contentContainer);
+
+    //Appending dynamically to currently opened page
+    document.body.appendChild(parentContainer);
+};
+document.body.appendChild(showCopiedBtn);
+
+chrome.storage.local.get(['isEnabledKey'], function(result) {
+    if (result.isEnabledKey) {
+        showCopiedBtn.style.display = 'block';
+    } else {
+        showCopiedBtn.style.display = 'none';
     }
 });
 
-document.addEventListener("copy", () =>
-    navigator.clipboard.readText()
-        .then(copiedText => {
-                chrome.storage.local.get(['allContent'],function(result) {
-                    var text = copiedText;
-                    if(result.allContent)
-                        text = result.allContent + "\n\n" + text;
-                    chrome.storage.local.set({allContent:  text},function() {});
-                    console.log('All content\n', text);
-            });
-        })
-        .catch(err => {
-                console.error('Error occured while processing copied content ', err);
-            })
+document.addEventListener("copy", (event) =>
+    chrome.storage.local.get(['isEnabledKey'], function(result) {
+        if (result.isEnabledKey && event.target != document.getElementById('copiedTextAreaId')) {
+            navigator.clipboard.readText()
+                .then(copiedText => {
+                    chrome.storage.local.get(['allContent'], function(result) {
+                        var text = copiedText;
+                        if (result.allContent)
+                            text = result.allContent + "\n\n" + text;
+                        chrome.storage.local.set({ allContent: text }, function() {});
+                        console.log('All content\n', text);
+                    });
+                })
+                .catch(err => {
+                    console.error('Error occured while processing copied content ', err);
+                })
+        }
+    })
 )
 
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
-      document.getElementById("sideBarId").style.display = request.enabledValue ? "block" : "none";
-  });
+        if (request.enabledValue)
+            document.getElementById("showCopiedBtnId").style.display = "block";
+        else {
+            document.getElementById("showCopiedBtnId").style.display = "none";
+            document.getElementById("parentContainerDiv").style.display = "none";
+        }
+    });
 
+document.addEventListener('selectionchange', () => {
+    console.log(document.getSelection());
+});
